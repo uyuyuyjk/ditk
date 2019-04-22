@@ -67,6 +67,11 @@ class TestSQLNetMethods(unittest.TestCase):
 
         self.assertIsNotNone(word_emb)
 
+    def writetocsv(self, fname, entry):
+        with open(fname, 'w', newline='') as csvfile:
+            csvwriter = csv.writer(csvfile, delimiter=',')
+            csvwriter.writerows(entry)
+
     def test_output(self):
         self.loadargs()
 
@@ -107,13 +112,25 @@ class TestSQLNetMethods(unittest.TestCase):
         model.cond_pred.load_state_dict(torch.load(cond_m))
         self.assertIsInstance(cond_m, str)
 
-        e4, e5 = epoch_acc(model, BATCH_SIZE, test_sql_data, test_table_data, TEST_ENTRY)
+        predicted_queries = []
+        e4, e5 = epoch_acc(model, BATCH_SIZE, test_sql_data, test_table_data, TEST_ENTRY, pred_queries_holder=predicted_queries)
+        self.writetocsv('entry.csv', predicted_queries)
         self.assertIsInstance(e4, float)
         self.assertIsInstance(e5, float)
         print("Test acc_qm: %s;\n  breakdown on (agg, sel, where): %s" % (e4, e5))
-        e6 = epoch_exec_acc(model, BATCH_SIZE, test_sql_data, test_table_data, TEST_DB)
+        predicted_queries = []
+        e6 = epoch_exec_acc(model, BATCH_SIZE, test_sql_data, test_table_data, TEST_DB, pred_queries_holder=predicted_queries)
+        self.writetocsv('db.csv', predicted_queries)
         self.assertIsInstance(e6, float)
         print("Test execution acc: %s" % e6)
 
+        predicted_queries = []
+        e4, e5 = epoch_acc(model, BATCH_SIZE, test_sql_data, test_table_data, TEST_ENTRY, pred_queries_holder=predicted_queries)
+        writetocsv('entry.csv', predicted_queries)
+        print("Test acc_qm: %s;\n  breakdown on (agg, sel, where): %s" % (e4, e5))
+        predicted_queries = []
+        e6 = epoch_exec_acc(model, BATCH_SIZE, test_sql_data, test_table_data, TEST_DB, pred_queries_holder=predicted_queries)
+        writetocsv('db.csv', predicted_queries)
+        print("Test execution acc: %s" % e6)
 if __name__ == '__main__':
     unittest.main()
